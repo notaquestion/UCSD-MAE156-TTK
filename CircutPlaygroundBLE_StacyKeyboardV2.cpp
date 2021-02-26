@@ -87,7 +87,7 @@ MenuTree M_OptionsMenu[] = {
 MenuTree M_KeyboardMenu[] = {
   TypeLetter,
   Backspace,
-  AutoComplete,
+  //AutoComplete,
   SpecialKeyMenu,
   NoMenu //Serves as a terminatior when itterating through array.
 };
@@ -383,6 +383,13 @@ void loop() {
 //  //If a press is occuring, click.
 //  //If a hold is occuring, continue moving at your current vector, i.e. a tangent to the circle. (Gotta see it in action)
 //
+
+//Changeable Mouse Settings
+int CircleSpeed = 125; 
+float CircleSize = 5; // Circle Radius
+int MouseLinearSpeed = 100; //The Delay between each frame of the mouse moving in a line. Longer is slower.
+
+
 void MouseFunctions()
 {
   //doWhat = AwaitInput(1);
@@ -392,15 +399,17 @@ void MouseFunctions()
         CircuitPlayground.setPixelColor(i, 0x110000);         //  Set pixel's color (in RAM)
       }                        
 
+      ChangeMouseSettingsViaButton();
+
       //MOUSE SETTINGS
       //int CircleSpeed = 200; // Delay between each frame of the rotating circle, lower value, faster movement.
-      int CircleSpeed = 125; 
-      float CircleSize = 5; // Circle Radius
-      
+      // int CircleSpeed = 125; 
+      // float CircleSize = 5; // Circle Radius
+      //int MouseLinearSpeed = 100; //The Delay between each frame of the mouse moving in a line. Longer is slower.
+
       int MoveDelay = 500; // Hold time/delay before mouse starts moving instead of clicking.
       
-      int MouseLinearSpeed = 100; //The Delay between each frame of the mouse moving in a line. Longer is slower.
-      int HoldToGoBackLength = 150; //How many MouseLinearSpeed delays we should wait before going back to the MainMenu from this Mouse Menu
+            int HoldToGoBackLength = 150; //How many MouseLinearSpeed delays we should wait before going back to the MainMenu from this Mouse Menu
       
       //INTERNAL
       bool xDirection = false;
@@ -496,7 +505,7 @@ void MouseFunctions()
           //If heldTime Goes over HoldToGoBackLength, we go back to typing Menu.
           while(TouchCondition()) 
           {
-
+            
             float speed = constrain(heldTime * rampUpSpeed,  minSpeed, maxSpeed);
             Mouse.move(speed * float(xMove), speed *  float(yMove)); //Using heldTime as a scaler results in a linear acceleration.
             delay(MouseLinearSpeed);
@@ -516,6 +525,7 @@ void MouseFunctions()
             }
           }
 
+          //If you hold for over a certain amount of time (until all the white LEDs are lit up), we assume that's because you want to go back to typing stuff/
           if(heldTime > HoldToGoBackLength)
           {
             CurrentMenu = MainMenu;
@@ -565,6 +575,9 @@ Commands AwaitInput(int FramesToWait)
     if(!TouchCondition()) //No Input
     {
       //Serial.print(".");
+
+      //Seems like a bizare place to put the settings, but this is where we're waiting for input most of the time.
+      ChangeSelectionSettingsViaButton();
 
       i += 100;
       delay(100);
@@ -1009,6 +1022,149 @@ String PopulateAutoCompleteDicOptions()
 
 
 /////////////////////////////ONBOARD OPTIONS/SETTINGS FUNCTIONS//////////////////////////////////////
+
+void ChangeSelectionSettingsViaButton()
+{
+  //if(CircuitPlayground.slideSwitch())
+  {
+    if(CircuitPlayground.leftButton())
+    {
+      CircuitPlayground.playTone(50, 100, false);
+      //Serial.println("L + L");
+      int heldFor = 0;
+      while(CircuitPlayground.leftButton() && heldFor < 3000 || heldFor < 200)
+      {
+        delay(1);
+        ++heldFor;
+      }
+      CircuitPlayground.playTone(150, 100, false);
+
+      CycleSpeed = heldFor;
+
+      delay(0.5);
+      CircuitPlayground.playTone(50, 100, false);
+      DisplayText(" -New Cycle Speed: " + String(CycleSpeed));
+      delay(CycleSpeed);
+      ClearText(" -New Cycle Speed: " + String(CycleSpeed));
+      CircuitPlayground.playTone(150, 100, false);
+
+    }
+    else if (CircuitPlayground.rightButton())
+    {
+      CircuitPlayground.playTone(50, 100, false);
+      //Serial.println("L + L");
+      int heldFor = 0;
+      while(CircuitPlayground.rightButton() && heldFor < 3000 || heldFor < 400)
+      {
+        delay(1);
+        ++heldFor;
+      }
+      CircuitPlayground.playTone(50, 100, false);
+
+      GoBackHoldTime = heldFor;
+
+      delay(0.5);
+      CircuitPlayground.playTone(50, 100, false);
+      DisplayText(" -New Hold to Go Back Time: " + String(GoBackHoldTime));
+      delay(GoBackHoldTime);
+      ClearText(" -New Hold to Go Back Time: " + String(GoBackHoldTime));
+      CircuitPlayground.playTone(50, 100, false);
+    }
+  }
+  // else
+  // {
+  //   if(CircuitPlayground.leftButton())
+  //   {
+  //     Serial.println("R + L");
+  //   }
+  //   else if (CircuitPlayground.rightButton())
+  //   {
+  //     Serial.println("R + R");
+      
+  //   }
+  // }
+}
+
+void ChangeMouseSettingsViaButton()
+{
+  if(CircuitPlayground.slideSwitch())
+  {
+    if(CircuitPlayground.leftButton())
+    {
+      CircuitPlayground.playTone(50, 100, false);
+      //Serial.println("L + L");
+      int heldFor = 0;
+      while(CircuitPlayground.leftButton() && heldFor < 3000 || heldFor < 1)
+      {
+        delay(1);
+        ++heldFor;
+      }
+      CircuitPlayground.playTone(150, 100, false);
+
+      CircleSpeed = constrain(heldFor/10, 0, 200);
+
+      delay(0.5);
+      CircuitPlayground.playTone(50, 100, false);
+      DisplayText(" -New Mouse Circle Speed: " + String(CircleSpeed));
+      delay(CycleSpeed);
+      ClearText(" -New Mouse Circle Speed: " + String(CircleSpeed));
+      CircuitPlayground.playTone(150, 100, false);
+
+    }
+    else if (CircuitPlayground.rightButton())
+    {
+      CircuitPlayground.playTone(50, 100, false);
+      //Serial.println("L + L");
+      int heldFor = 0;
+      while(CircuitPlayground.rightButton() && heldFor < 3000 || heldFor < 200)
+      {
+        delay(1);
+        ++heldFor;
+      }
+      CircuitPlayground.playTone(50, 100, false);
+
+      MouseLinearSpeed = constrain(heldFor/10, 20, 500);
+
+      delay(0.5);
+      CircuitPlayground.playTone(50, 100, false);
+      DisplayText(" -New Mouse Linear Speed: " + String(MouseLinearSpeed));
+      delay(CycleSpeed);
+      ClearText(" -New Mouse Linear Speed: " + String(MouseLinearSpeed));
+      CircuitPlayground.playTone(50, 100, false);
+    }
+  }
+  else
+  {
+    if(CircuitPlayground.leftButton())
+    {
+      CircuitPlayground.playTone(50, 100, false);
+      //Serial.println("L + L");
+      int heldFor = 0;
+      while(CircuitPlayground.leftButton() && heldFor < 20000 || heldFor < 750)
+      {
+        delay(1);
+        ++heldFor;
+      }
+      CircuitPlayground.playTone(150, 100, false);
+
+      CircleSize = constrain(heldFor/1000.0, 0.75, 20.0);
+
+      delay(0.5);
+      CircuitPlayground.playTone(50, 100, false);
+      DisplayText(" -New Mouse Circle Radius: " + String(CircleSize));
+      delay(CycleSpeed);
+      ClearText(" -New Mouse Circle Radius: " + String(CircleSize));
+      CircuitPlayground.playTone(150, 100, false);
+
+    }
+    // else if (CircuitPlayground.rightButton())
+    // {
+    //   Serial.println("R + R");
+      
+    // }
+  }
+}
+
 void ShortenDelay()
 {
   GoBackHoldTime -= 250;

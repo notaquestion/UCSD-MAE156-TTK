@@ -18,6 +18,44 @@ Commands NextCommand = None; //What to do next.
 
 bool DebugSerialCapacativeTouch = true;
 
+///////////////////////FREQUENTLY USED WORD STORAGE///////////////////////
+//Stacy has his own verison of this I've edited with him.
+const char Words_A[] PROGMEM = "ABOUT/AFTER/ALSO";
+const char Words_B[] PROGMEM = "BACK/BECAUSE";
+const char Words_C[] PROGMEM = "CHEST/COME/COMEDY/COMPUTER/COULD";
+const char Words_D[] PROGMEM = "DRAMA/DRINK";
+const char Words_E[] PROGMEM = "EVEN";
+const char Words_F[] PROGMEM = "FIND/FINGERS/FIRST/FROM/FUNNY";
+const char Words_G[] PROGMEM = "GAMES/GIVE/GOOD";
+const char Words_H[] PROGMEM = "HAND/HAVE/HEAD/HIPS/HURT";
+const char Words_I[] PROGMEM = "I WANT/I WANT TO/I WANT TO DO/I WANT TO GET/INTO";
+const char Words_J[] PROGMEM = "JUST";
+const char Words_K[] PROGMEM = "KNOW";
+const char Words_L[] PROGMEM = "LETTERS/LIKE/LOOK/LOVE";
+const char Words_M[] PROGMEM = "MAKE/MOVIE";
+const char Words_N[] PROGMEM = "NECK";
+const char Words_O[] PROGMEM = "ONLY/OTHER/OVER";
+const char Words_P[] PROGMEM = "PAINFUL/PEOPLE/PILLOW/PLAY/PLEASE";
+const char Words_S[] PROGMEM = "SOME/STRAW/SWEAT";
+const char Words_T[] PROGMEM = "TAKE/THAN/THANK YOU/THAT/THEIR/THEM/THEN/THERE/THESE/THEY/THINK/THIS/TIME/TIRED/TOES/TURN/TV SERIES";
+const char Words_W[] PROGMEM = "WANT/WELL/WENT/WHAT/WHEELCHAIR/WHEN/WHICH/WILL/WITH/WORDS/WORK/WOULD/WRITE";
+const char Words_Y[] PROGMEM = "YEAR/YOUR";
+
+const char *const AutoSuggestDic[] PROGMEM = {Words_A, Words_B, Words_C, Words_D, Words_E, Words_F, Words_G, Words_H, Words_I, Words_J, Words_K, Words_L, Words_M, Words_N, Words_O, Words_P, Words_S, Words_T, Words_W, Words_Y, };
+const int AutoSuggestDic_SIZE = 20;
+
+///////////////////////TYPE LETTER STORAGE///////////////////////
+//This is a 2D grid 
+const char LetterClumps_1[] PROGMEM = "_/E/T/S/D/W";
+const char LetterClumps_2[] PROGMEM = "O/H/I/L/F/K";
+const char LetterClumps_3[] PROGMEM = "A/N/U/G/V/Z";
+const char LetterClumps_4[] PROGMEM = "R/Y/C/J/1/2";
+const char LetterClumps_5[] PROGMEM = "M/B/Q/3/4/5";
+const char LetterClumps_6[] PROGMEM = "P/X/6/7/8/9";
+const char LetterClumps_7[] PROGMEM = "./?/,/+/!";
+const char *const LetterClumps[] PROGMEM = {LetterClumps_1, LetterClumps_2, LetterClumps_3, LetterClumps_4, LetterClumps_5, LetterClumps_6, LetterClumps_7};
+const int LetterClumps_SIZE = 7;
+
 ///////////////////////MENU STUFF///////////////////////
 //All our menus tabbed by menu depth, linke to MenuTreeAsStrings bellow by index/position.
 enum MenuTree {
@@ -112,44 +150,7 @@ uint32_t GoBackColor  = ColorRed;
 uint32_t MouseColor   = ColorBlue;
 
 
-///////////////////////TYPE LETTER STORAGE///////////////////////
-//This is a 2D grid 
-const char LetterClumps_1[] PROGMEM = "_/E/T/S/D/W";
-const char LetterClumps_2[] PROGMEM = "O/H/I/L/F/K";
-const char LetterClumps_3[] PROGMEM = "A/N/U/G/V/Z";
-const char LetterClumps_4[] PROGMEM = "R/Y/C/J/1/2";
-const char LetterClumps_5[] PROGMEM = "M/B/Q/3/4/5";
-const char LetterClumps_6[] PROGMEM = "P/X/6/7/8/9";
-const char LetterClumps_7[] PROGMEM = "./?/,/+/!";
-const char *const LetterClumps[] PROGMEM = {LetterClumps_1, LetterClumps_2, LetterClumps_3, LetterClumps_4, LetterClumps_5, LetterClumps_6, LetterClumps_7};
-const int LetterClumps_SIZE = 7;
 
-
-///////////////////////FREQUENTLY USED WORD STORAGE///////////////////////
-//Stacy has his own verison of this I've edited with him.
-const char Words_A[] PROGMEM = "ABOUT/ACTION/ADVENTURE CAPATALIST/AFTER/ALSO/AMANDA";
-const char Words_B[] PROGMEM = "BACK/BECAUSE/BRANDON/BURRITO/BIG FISH GAMES";
-const char Words_C[] PROGMEM = "CAKE/CHEESEBURGER/CHERIE/CHEST/COME/COMEDY/COMPUTER/CONCERT/COOKIES/COULD";
-const char Words_D[] PROGMEM = "DANIEL/DEONTE/DRAMA/DRINK STRAW";
-const char Words_E[] PROGMEM = "EVEN";
-const char Words_F[] PROGMEM = "FIND/FINGERS/FIRST/FRENCH FRIES/FROM/FROSTWIRE/FUNNY";
-const char Words_G[] PROGMEM = "GAMES/GINA/GIVE/GOOD";
-const char Words_H[] PROGMEM = "HAND/HAVE/HEAD/HIDDEN OBJECT/HIPS/HURT";
-const char Words_I[] PROGMEM = "I WANT/I WANT TO/I WANT TO DO/I WANT TO GET/ICE CREAM SANDWICH/INTO";
-const char Words_J[] PROGMEM = "JASON/JIGWORDS/JOSE/JUST";
-const char Words_K[] PROGMEM = "KNOW";
-const char Words_L[] PROGMEM = "LASAGNA/LEMONADE WATER/LETTERS/LIKE/LOOK/LOVE";
-const char Words_M[] PROGMEM = "MACARONI/MAKE/MARCY/MICHAEL/MIKE/MONTI/MOST/MOVIE";
-const char Words_N[] PROGMEM = "NECK/NICK";
-const char Words_O[] PROGMEM = "ONLY/OTHER/OVER";
-const char Words_P[] PROGMEM = "PAINFUL/PAUL/PEOPLE/PILLOW/PINEAPPLE WATER/PLAY/PLEASE";
-const char Words_S[] PROGMEM = "SHEET/SOME/STEAM/SWEAT";
-const char Words_T[] PROGMEM = "TAKE/TANGELO/THAN/THANK YOU/THAT/THEIR/THEM/THEN/THERE/THESE/THEY/THINK/THIS/TIME/TIRED/TOES/TURN/TV SERIES";
-const char Words_W[] PROGMEM = "WANT/WELL/WENT/WHAT/WHEELCHAIR/WHEN/WHICH/WILL/WITH/WORDS/WORK/WOULD/WRITE";
-const char Words_Y[] PROGMEM = "YEAR/YOUR";
-
-const char *const AutoSuggestDic[] PROGMEM = {Words_A, Words_B, Words_C, Words_D, Words_E, Words_F, Words_G, Words_H, Words_I, Words_J, Words_K, Words_L, Words_M, Words_N, Words_O, Words_P, Words_S, Words_T, Words_W, Words_Y, };
-const int AutoSuggestDic_SIZE = 20;
 
 
 ///////////////////////END///////////////////////

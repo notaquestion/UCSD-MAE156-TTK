@@ -553,14 +553,18 @@ void MouseFunctions()
 
 
 
+
 //////////////////////////////INPUT FUNCTIONS/////////////////////////////////
+int AverageCap = 0;
 bool TouchCondition()
 {
   if(DebugSerialCapacativeTouch)
     Serial.println(CircuitPlayground.readCap(0));
 
+  AverageCap += CircuitPlayground.readCap(0);
+  AverageCap /= 2;
   //Serial.print(" CT0("); Serial.print(CircuitPlayground.readCap(0));Serial.print(')');
-  return CircuitPlayground.readCap(0) > 1200;
+  return AverageCap > 1200;
 }
 
 Commands AwaitInput(int FramesToWait)

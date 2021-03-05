@@ -7,9 +7,18 @@
 
 
 ///////////////////////GLOBAL VARIABLES///////////////////////
-int CycleSpeed = 1500; //Delay befor showing a new clickable option.
-int GoBackHoldTime = 2000; //Amount of time user must hold input to peform Back Command in AwaitInput.
+
+//Changeable Menu Settings
+int CycleSpeed = 1000; //Delay befor showing a new clickable option. (these are roughly in millisecconds)
+int GoBackHoldTime = 1000; //Amount of time user must hold input to peform Back Command in AwaitInput.
 int InputDelay = 5; //Delay before a new Input can be started after showing a new option.
+
+//Changeable Mouse Settings
+int CircleSpeed = 0; //How fast the mouse circles when input is not being held.
+float CircleSize = 5; // Circle Radius
+int MouseLinearSpeed = 75; //The Delay between each frame of the mouse moving in a line. Longer is slower.
+float RampUpSpeed = 0.05; //Scalar effecting how quickly we ramp from min to max.
+
 
 float MouseTimer = 0.0;  //Timer used to determine mouse roation and angle in MouseFunctions();
 
@@ -21,24 +30,24 @@ bool DebugSerialCapacativeTouch = true;
 ///////////////////////FREQUENTLY USED WORD STORAGE///////////////////////
 //Stacy has his own verison of this I've edited with him.
 const char Words_A[] PROGMEM = "ABOUT/AFTER/ALSO";
-const char Words_B[] PROGMEM = "BACK/BECAUSE";
-const char Words_C[] PROGMEM = "CHEST/COME/COMEDY/COMPUTER/COULD";
+const char Words_B[] PROGMEM = "BACK/BECAUSE/BEFORE";
+const char Words_C[] PROGMEM = "CHEST/COME/COMEDY/COMPUTER/CAN'T/COULD/COULDN'T";
 const char Words_D[] PROGMEM = "DRAMA/DRINK";
-const char Words_E[] PROGMEM = "EVEN";
-const char Words_F[] PROGMEM = "FIND/FINGERS/FIRST/FROM/FUNNY";
-const char Words_G[] PROGMEM = "GAMES/GIVE/GOOD";
+const char Words_E[] PROGMEM = "EVEN/EVERY/EVERYTHING/EVERYTIME";
+const char Words_F[] PROGMEM = "FIND/FINGERS/FIRST/FOOD/FROM/FUNNY";
+const char Words_G[] PROGMEM = "GAMES/GIVE/GOOD/GREAT";
 const char Words_H[] PROGMEM = "HAND/HAVE/HEAD/HIPS/HURT";
 const char Words_I[] PROGMEM = "I WANT/I WANT TO/I WANT TO DO/I WANT TO GET/INTO";
-const char Words_J[] PROGMEM = "JUST";
-const char Words_K[] PROGMEM = "KNOW";
-const char Words_L[] PROGMEM = "LETTERS/LIKE/LOOK/LOVE";
-const char Words_M[] PROGMEM = "MAKE/MOVIE";
-const char Words_N[] PROGMEM = "NECK";
+const char Words_J[] PROGMEM = "JAKE/JUST";
+const char Words_K[] PROGMEM = "KNOW/KNOWLEGE/KNOWING";
+const char Words_L[] PROGMEM = "LETTERS/LIKE/LOOK/LOST/LOVE/LOVELY";
+const char Words_M[] PROGMEM = "MAKE/MOVE/MOVIE";
+const char Words_N[] PROGMEM = "NECK/NICE";
 const char Words_O[] PROGMEM = "ONLY/OTHER/OVER";
 const char Words_P[] PROGMEM = "PAINFUL/PEOPLE/PILLOW/PLAY/PLEASE";
-const char Words_S[] PROGMEM = "SOME/STRAW/SWEAT";
+const char Words_S[] PROGMEM = "SAME/SCIENCE/SOME/STRAW/SWEAT";
 const char Words_T[] PROGMEM = "TAKE/THAN/THANK YOU/THAT/THEIR/THEM/THEN/THERE/THESE/THEY/THINK/THIS/TIME/TIRED/TOES/TURN/TV SERIES";
-const char Words_W[] PROGMEM = "WANT/WELL/WENT/WHAT/WHEELCHAIR/WHEN/WHICH/WILL/WITH/WORDS/WORK/WOULD/WRITE";
+const char Words_W[] PROGMEM = "WANT/WATER/WELL/WENT/WHAT/WHEELCHAIR/WHEN/WHICH/WILL/WITH/WORDS/WORK/WOULD/WRITE";
 const char Words_Y[] PROGMEM = "YEAR/YOUR";
 
 const char *const AutoSuggestDic[] PROGMEM = {Words_A, Words_B, Words_C, Words_D, Words_E, Words_F, Words_G, Words_H, Words_I, Words_J, Words_K, Words_L, Words_M, Words_N, Words_O, Words_P, Words_S, Words_T, Words_W, Words_Y, };
@@ -166,7 +175,7 @@ void setup()
   CircuitPlayground.begin();
 
 
-  //Just an Everythings OK show.
+  //Just an Everythings OK`show.
   delay(1000);
   colorWipe(PendingColor, 35);
   delay(1000);
@@ -385,10 +394,6 @@ void loop() {
 //  //If a hold is occuring, continue moving at your current vector, i.e. a tangent to the circle. (Gotta see it in action)
 //
 
-//Changeable Mouse Settings
-int CircleSpeed = 125; 
-float CircleSize = 5; // Circle Radius
-int MouseLinearSpeed = 100; //The Delay between each frame of the mouse moving in a line. Longer is slower.
 
 
 void MouseFunctions()
@@ -419,7 +424,7 @@ void MouseFunctions()
 
       float minSpeed = 0.0;//Minimum mouse speed
       float maxSpeed = 7.5;//Maximum mouse speed
-      float rampUpSpeed = 0.05; //Scalar effecting how quickly we ramp from min to max.
+      //float RampUpSpeed = 0.25; //Scalar effecting how quickly we ramp from min to max.
 
       int xMove = (round(xMax));
       int yMove = (round(yMax));
@@ -507,7 +512,7 @@ void MouseFunctions()
           while(TouchCondition()) 
           {
             
-            float speed = constrain(heldTime * rampUpSpeed,  minSpeed, maxSpeed);
+            float speed = constrain(heldTime * RampUpSpeed,  minSpeed, maxSpeed);
             Mouse.move(speed * float(xMove), speed *  float(yMove)); //Using heldTime as a scaler results in a linear acceleration.
             delay(MouseLinearSpeed);
             ++heldTime;
@@ -553,15 +558,17 @@ void MouseFunctions()
 }
 
 
-
+int AverageCap = 0;
 //////////////////////////////INPUT FUNCTIONS/////////////////////////////////
 bool TouchCondition()
 {
   if(DebugSerialCapacativeTouch)
     Serial.println(CircuitPlayground.readCap(0));
 
+  AverageCap += CircuitPlayground.readCap(0);
+  AverageCap /= 2;
   //Serial.print(" CT0("); Serial.print(CircuitPlayground.readCap(0));Serial.print(')');
-  return CircuitPlayground.readCap(0) > 1200;
+  return AverageCap > 1200;
 }
 
 Commands AwaitInput(int FramesToWait)

@@ -6,7 +6,7 @@
 #include <math.h>    // (no semicolon)
 
 
-///////////////////////GLOBAL VARIABLES///////////////////////
+///////////////////////USER GLOBAL VARIABLES///////////////////////
 
 //Changeable Menu Settings
 int CycleSpeed = 1000; //Delay befor showing a new clickable option. (these are roughly in millisecconds)
@@ -19,13 +19,18 @@ float CircleSize = 5; // Circle Radius
 int MouseLinearSpeed = 75; //The Delay between each frame of the mouse moving in a line. Longer is slower.
 float RampUpSpeed = 0.05; //Scalar effecting how quickly we ramp from min to max.
 
+bool DebugSerialCapacativeTouch = true;
 
+///////////////////////SYSTEM GLOBAL VARIABLES///////////////////////
 float MouseTimer = 0.0;  //Timer used to determine mouse roation and angle in MouseFunctions();
 
 enum Commands {None, Back, Select1}; //The commands we can issue with our hardware. Usually returned by AwaitInput()
 Commands NextCommand = None; //What to do next.
 
-bool DebugSerialCapacativeTouch = true;
+int BaselineTouchThreshold = 0; //Touch Threshold when no one touching
+int TouchThreshold = 0; //Adjustable threshold, adjusted up based on MaxTouch
+int MaxTouch = 0;
+
 
 ///////////////////////FREQUENTLY USED WORD STORAGE///////////////////////
 //Stacy has his own verison of this I've edited with him.
@@ -42,10 +47,10 @@ const char Words_J[] PROGMEM = "JAKE/JUST";
 const char Words_K[] PROGMEM = "KNOW/KNOWLEGE/KNOWING";
 const char Words_L[] PROGMEM = "LETTERS/LIKE/LOOK/LOST/LOVE/LOVELY";
 const char Words_M[] PROGMEM = "MAKE/MOVE/MOVIE";
-const char Words_N[] PROGMEM = "NECK/NICE";
+const char Words_N[] PROGMEM = "NECK/NICE/NICK";
 const char Words_O[] PROGMEM = "ONLY/OTHER/OVER";
 const char Words_P[] PROGMEM = "PAINFUL/PEOPLE/PILLOW/PLAY/PLEASE";
-const char Words_S[] PROGMEM = "SAME/SCIENCE/SOME/STRAW/SWEAT";
+const char Words_S[] PROGMEM = "SAME/SCIENCE/SOME/STACY/STRAW/SWEAT";
 const char Words_T[] PROGMEM = "TAKE/THAN/THANK YOU/THAT/THEIR/THEM/THEN/THERE/THESE/THEY/THINK/THIS/TIME/TIRED/TOES/TURN/TV SERIES";
 const char Words_W[] PROGMEM = "WANT/WATER/WELL/WENT/WHAT/WHEELCHAIR/WHEN/WHICH/WILL/WITH/WORDS/WORK/WOULD/WRITE";
 const char Words_Y[] PROGMEM = "YEAR/YOUR";
@@ -158,11 +163,7 @@ uint32_t ConfirmColor = ColorGreen;
 uint32_t GoBackColor  = ColorRed;
 uint32_t MouseColor   = ColorBlue;
 
-
-
-
-
-///////////////////////END///////////////////////
+///////////////////////END Variables ///////////////////////
 
 void setup() 
 { // initialize the buttons' inputs:
@@ -177,28 +178,29 @@ void setup()
 
   //Just an Everythings OK`show.
   delay(1000);
-  colorWipe(PendingColor, 35);
-  delay(1000);
+
+  //Calibrate for 1000 frames, get the highest cap in that range and use it to set TouchThreshold and MaxTouch
+  int calibrationDelation = 1000;
+  for(int i = 0; i < calibrationDelation; ++i)
+  {
+    fillOverTime(PendingColor, i, calibrationDelation);
+    if(CircuitPlayground.readCap(0) > BaselineTouchThreshold)
+    {
+      BaselineTouchThreshold = CircuitPlayground.readCap(0);
+      TouchThreshold = BaselineTouchThreshold;
+      MaxTouch = CircuitPlayground.readCap(0);
+    }
+    delay(1);
+  }
+
+  TouchThreshold *= 2.0; //Lets start 2X as high as the max signal we got, we're assuming we didn't touch during calibration.
   CircuitPlayground.clearPixels();
 
-
-  
   //Now that everythigns connected, rainbows!
-  theaterChaseRainbow(20, 2000);
+  theaterChaseRainbow(20, 1000);
   CircuitPlayground.clearPixels();
-
-
-  // for (int i = 0; i < 10000; ++i)
-  // {
-  //  fillOverTime(CircuitPlayground.strip, PendingColor, i, 10000);
-  //   delay(1);
-  // }
-  // CircuitPlayground.clearPixels();
 
   Serial.println(MenuTreeToString(MainMenu));
-
-
-
 }
 
 char buffer[200];  // make sure this is large enough for the largest string it must hold
@@ -235,7 +237,7 @@ void loop() {
             // delay(1000);
             // ClearText("Going to Mouse Menu");
 
-            DebugSerialCapacativeTouch = false;
+            //DebugSerialCapacativeTouch = false;
             CurrentMenu = MouseMenu;
         }
 
@@ -558,22 +560,40 @@ void MouseFunctions()
 }
 
 
-int AverageCap = 0;
 //////////////////////////////INPUT FUNCTIONS/////////////////////////////////
+int AverageCap = 0;
 bool TouchCondition()
 {
-  if(DebugSerialCapacativeTouch)
-    Serial.println(CircuitPlayground.readCap(0));
+  int cap = CircuitPlayground.readCap(0);
 
-  AverageCap += CircuitPlayground.readCap(0);
-  AverageCap /= 2;
-  //Serial.print(" CT0("); Serial.print(CircuitPlayground.readCap(0));Serial.print(')');
-  return AverageCap > 1200;
+  //Fast Fall Smoothing
+  AverageCap = AverageCap > cap ? //Teranary operator. If this is true
+        cap //Reutrn this
+        :(AverageCap * 9 + cap)/10; //Otherwise return this
+
+  if(AverageCap > MaxTouch)
+  {
+    MaxTouch = AverageCap;
+    TouchThreshold = (MaxTouch + 2 * BaselineTouchThreshold)/3;
+  }
+  
+  if(DebugSerialCapacativeTouch)
+  {
+    Serial.println("BaselineTouchThreshold"); Serial.print(BaselineTouchThreshold); Serial.print('\t');
+    Serial.print("TouchThreshold:"); Serial.print(TouchThreshold); Serial.print('\t');
+    Serial.print("Raw:"); Serial.print(cap); Serial.print('\t');
+    Serial.print("Smoothed:"); Serial.println(AverageCap);
+
+  }
+
+  return AverageCap > TouchThreshold;
 }
+
 
 Commands AwaitInput(int FramesToWait)
 {
-  Serial.println("\nAwaiting Input - ");
+  if(!DebugSerialCapacativeTouch)
+    Serial.println("\nAwaiting Input - ");
   bool hasBeenFalse = false; //Has this ever been false? TO prevent button from being held accidentily as part of last press.
 
   int i = 0;
@@ -598,7 +618,10 @@ Commands AwaitInput(int FramesToWait)
     else if(TouchCondition() && hasBeenFalse) 
     {
       CircuitPlayground.playTone(50, 100, false);
-      Serial.print("\nTouch Started...");
+      
+      if(!DebugSerialCapacativeTouch)
+        Serial.print("\nTouch Started...");
+      
       int t = 0;
 
 
@@ -608,7 +631,11 @@ Commands AwaitInput(int FramesToWait)
         t += 100;
         delay(100);
       }
-      Serial.print("\nFinished Touch. Duration "); Serial.print(t); Serial.print(" frames. Result: ");
+      
+      if(!DebugSerialCapacativeTouch)
+      {
+        Serial.print("\nFinished Touch. Duration "); Serial.print(t); Serial.print(" frames. Result: ");
+      }
 
       CircuitPlayground.clearPixels();
 
@@ -617,16 +644,22 @@ Commands AwaitInput(int FramesToWait)
         CircuitPlayground.playTone(125, 100, false);
         // DisplayText(" --Back-- ");
         colorWipe(GoBackColor, 25); 
-        Serial.print("Go Back. Awaiting Release:");
+
+        if(!DebugSerialCapacativeTouch)
+          Serial.print("Go Back. Awaiting Release:");
+
         delay(500);
         // ClearText(" --Back-- ");
 
         while(TouchCondition())
         {
           delay(20);
-          Serial.print('.');
+            if(!DebugSerialCapacativeTouch)
+              Serial.print('.');
         }
-        Serial.println("Released");
+        if(!DebugSerialCapacativeTouch)
+          Serial.println("Released");
+        
         CircuitPlayground.playTone(150, 100, false);
         
         CircuitPlayground.clearPixels();
@@ -640,7 +673,10 @@ Commands AwaitInput(int FramesToWait)
         // DisplayText(" --Selected-- ");
         // DisplayText(String(t));
         colorWipe(ConfirmColor, 25); 
-        Serial.println("Select");
+  
+        if(!DebugSerialCapacativeTouch)
+          Serial.println("Select");
+  
         delay(500);
         // ClearText(String(t));
         // ClearText(" --Selected-- ");
@@ -652,7 +688,9 @@ Commands AwaitInput(int FramesToWait)
     }
 
   }
-  Serial.println("\n - End Await Input");
+  if(!DebugSerialCapacativeTouch)
+    Serial.println("\n - End Await Input");
+  
   CircuitPlayground.clearPixels();
   return None;
 }

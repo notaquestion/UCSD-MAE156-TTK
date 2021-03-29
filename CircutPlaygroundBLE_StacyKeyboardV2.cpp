@@ -6,17 +6,69 @@
 #include <math.h>    // (no semicolon)
 
 
-///////////////////////GLOBAL VARIABLES///////////////////////
+///////////////////////USER GLOBAL VARIABLES///////////////////////
+
+//Changeable Menu Settings
 int CycleSpeed = 1500; //Delay befor showing a new clickable option.
 int GoBackHoldTime = 2000; //Amount of time user must hold input to peform Back Command in AwaitInput.
 int InputDelay = 5; //Delay before a new Input can be started after showing a new option.
 
+//Changeable Mouse Settings? - Stole them from Jakes, can we adapt them?
+int CircleSpeed = 125; //How fast the mouse circles when input is not being held.
+float CircleSize = 5; // Circle Radius
+int MouseLinearSpeed = 100; //The Delay between each frame of the mouse moving in a line. Longer is slower.
+float RampUpSpeed = 0.05; //Scalar effecting how quickly we ramp from min to max.
+
+bool DebugSerialCapacativeTouch = true;
+
+///////////////////////SYSTEM GLOBAL VARIABLES///////////////////////
 float MouseTimer = 0.0;  //Timer used to determine mouse roation and angle in MouseFunctions();
 
 enum Commands {None, Back, Select1}; //The commands we can issue with our hardware. Usually returned by AwaitInput()
 Commands NextCommand = None; //What to do next.
 
-bool DebugSerialCapacativeTouch = true;
+int BaselineTouchThreshold = 0; //Touch Threshold when no one touching
+int TouchThreshold = 0; //Adjustable threshold, adjusted up based on MaxTouch
+int MaxTouch = 0;
+
+
+///////////////////////FREQUENTLY USED WORD STORAGE///////////////////////
+//Stacy has his own verison of this I've edited with him.
+const char Words_A[] PROGMEM = "ABOUT/ACTION/ADVENTURE CAPATALIST/AFTER/ALSO/AMANDA";
+const char Words_B[] PROGMEM = "BACK/BECAUSE/BRANDON/BURRITO/BIG FISH GAMES";
+const char Words_C[] PROGMEM = "CAKE/CHEESEBURGER/CHERIE/CHEST/COME/COMEDY/COMPUTER/CONCERT/COOKIES/COULD";
+const char Words_D[] PROGMEM = "DANIEL/DEONTE/DRAMA/DRINK STRAW";
+const char Words_E[] PROGMEM = "EVEN";
+const char Words_F[] PROGMEM = "FIND/FINGERS/FIRST/FRENCH FRIES/FROM/FROSTWIRE/FUNNY";
+const char Words_G[] PROGMEM = "GAMES/GINA/GIVE/GOOD";
+const char Words_H[] PROGMEM = "HAND/HAVE/HEAD/HIDDEN OBJECT/HIPS/HURT";
+const char Words_I[] PROGMEM = "I WANT/I WANT TO/I WANT TO DO/I WANT TO GET/ICE CREAM SANDWICH/INTO";
+const char Words_J[] PROGMEM = "JASON/JIGWORDS/JOSE/JUST";
+const char Words_K[] PROGMEM = "KNOW";
+const char Words_L[] PROGMEM = "LASAGNA/LEMONADE WATER/LETTERS/LIKE/LOOK/LOVE";
+const char Words_M[] PROGMEM = "MACARONI/MAKE/MARCY/MICHAEL/MIKE/MONTI/MOST/MOVIE";
+const char Words_N[] PROGMEM = "NECK/NICK";
+const char Words_O[] PROGMEM = "ONLY/OTHER/OVER";
+const char Words_P[] PROGMEM = "PAINFUL/PAUL/PEOPLE/PILLOW/PINEAPPLE WATER/PLAY/PLEASE";
+const char Words_S[] PROGMEM = "SHEET/SOME/STEAM/SWEAT";
+const char Words_T[] PROGMEM = "TAKE/TANGELO/THAN/THANK YOU/THAT/THEIR/THEM/THEN/THERE/THESE/THEY/THINK/THIS/TIME/TIRED/TOES/TURN/TV SERIES";
+const char Words_W[] PROGMEM = "WANT/WELL/WENT/WHAT/WHEELCHAIR/WHEN/WHICH/WILL/WITH/WORDS/WORK/WOULD/WRITE";
+const char Words_Y[] PROGMEM = "YEAR/YOUR";
+
+const char *const AutoSuggestDic[] PROGMEM = {Words_A, Words_B, Words_C, Words_D, Words_E, Words_F, Words_G, Words_H, Words_I, Words_J, Words_K, Words_L, Words_M, Words_N, Words_O, Words_P, Words_S, Words_T, Words_W, Words_Y, };
+const int AutoSuggestDic_SIZE = 20;
+
+///////////////////////TYPE LETTER STORAGE///////////////////////
+//This is a 2D grid 
+const char LetterClumps_1[] PROGMEM = "_/E/T/S/D/W";
+const char LetterClumps_2[] PROGMEM = "O/H/I/L/F/K";
+const char LetterClumps_3[] PROGMEM = "A/N/U/G/V/Z";
+const char LetterClumps_4[] PROGMEM = "R/Y/C/J/1/2";
+const char LetterClumps_5[] PROGMEM = "M/B/Q/3/4/5";
+const char LetterClumps_6[] PROGMEM = "P/X/6/7/8/9";
+const char LetterClumps_7[] PROGMEM = "./?/,/+/!";
+const char *const LetterClumps[] PROGMEM = {LetterClumps_1, LetterClumps_2, LetterClumps_3, LetterClumps_4, LetterClumps_5, LetterClumps_6, LetterClumps_7};
+const int LetterClumps_SIZE = 7;
 
 ///////////////////////MENU STUFF///////////////////////
 //All our menus tabbed by menu depth, linke to MenuTreeAsStrings bellow by index/position.
@@ -111,48 +163,7 @@ uint32_t ConfirmColor = ColorGreen;
 uint32_t GoBackColor  = ColorRed;
 uint32_t MouseColor   = ColorBlue;
 
-
-///////////////////////TYPE LETTER STORAGE///////////////////////
-//This is a 2D grid 
-const char LetterClumps_1[] PROGMEM = "_/E/T/S/D/W";
-const char LetterClumps_2[] PROGMEM = "O/H/I/L/F/K";
-const char LetterClumps_3[] PROGMEM = "A/N/U/G/V/Z";
-const char LetterClumps_4[] PROGMEM = "R/Y/C/J/1/2";
-const char LetterClumps_5[] PROGMEM = "M/B/Q/3/4/5";
-const char LetterClumps_6[] PROGMEM = "P/X/6/7/8/9";
-const char LetterClumps_7[] PROGMEM = "./?/,/+/!";
-const char *const LetterClumps[] PROGMEM = {LetterClumps_1, LetterClumps_2, LetterClumps_3, LetterClumps_4, LetterClumps_5, LetterClumps_6, LetterClumps_7};
-const int LetterClumps_SIZE = 7;
-
-
-///////////////////////FREQUENTLY USED WORD STORAGE///////////////////////
-//Stacy has his own verison of this I've edited with him.
-const char Words_A[] PROGMEM = "ABOUT/ACTION/ADVENTURE CAPATALIST/AFTER/ALSO/AMANDA";
-const char Words_B[] PROGMEM = "BACK/BECAUSE/BRANDON/BURRITO/BIG FISH GAMES";
-const char Words_C[] PROGMEM = "CAKE/CHEESEBURGER/CHERIE/CHEST/COME/COMEDY/COMPUTER/CONCERT/COOKIES/COULD";
-const char Words_D[] PROGMEM = "DANIEL/DEONTE/DRAMA/DRINK STRAW";
-const char Words_E[] PROGMEM = "EVEN";
-const char Words_F[] PROGMEM = "FIND/FINGERS/FIRST/FRENCH FRIES/FROM/FROSTWIRE/FUNNY";
-const char Words_G[] PROGMEM = "GAMES/GINA/GIVE/GOOD";
-const char Words_H[] PROGMEM = "HAND/HAVE/HEAD/HIDDEN OBJECT/HIPS/HURT";
-const char Words_I[] PROGMEM = "I WANT/I WANT TO/I WANT TO DO/I WANT TO GET/ICE CREAM SANDWICH/INTO";
-const char Words_J[] PROGMEM = "JASON/JIGWORDS/JOSE/JUST";
-const char Words_K[] PROGMEM = "KNOW";
-const char Words_L[] PROGMEM = "LASAGNA/LEMONADE WATER/LETTERS/LIKE/LOOK/LOVE";
-const char Words_M[] PROGMEM = "MACARONI/MAKE/MARCY/MICHAEL/MIKE/MONTI/MOST/MOVIE";
-const char Words_N[] PROGMEM = "NECK/NICK";
-const char Words_O[] PROGMEM = "ONLY/OTHER/OVER";
-const char Words_P[] PROGMEM = "PAINFUL/PAUL/PEOPLE/PILLOW/PINEAPPLE WATER/PLAY/PLEASE";
-const char Words_S[] PROGMEM = "SHEET/SOME/STEAM/SWEAT";
-const char Words_T[] PROGMEM = "TAKE/TANGELO/THAN/THANK YOU/THAT/THEIR/THEM/THEN/THERE/THESE/THEY/THINK/THIS/TIME/TIRED/TOES/TURN/TV SERIES";
-const char Words_W[] PROGMEM = "WANT/WELL/WENT/WHAT/WHEELCHAIR/WHEN/WHICH/WILL/WITH/WORDS/WORK/WOULD/WRITE";
-const char Words_Y[] PROGMEM = "YEAR/YOUR";
-
-const char *const AutoSuggestDic[] PROGMEM = {Words_A, Words_B, Words_C, Words_D, Words_E, Words_F, Words_G, Words_H, Words_I, Words_J, Words_K, Words_L, Words_M, Words_N, Words_O, Words_P, Words_S, Words_T, Words_W, Words_Y, };
-const int AutoSuggestDic_SIZE = 20;
-
-
-///////////////////////END///////////////////////
+///////////////////////END Variables///////////////////////
 
 void setup() 
 { // initialize the buttons' inputs:
@@ -165,30 +176,31 @@ void setup()
   CircuitPlayground.begin();
 
 
-  //Just an Everythings OK show.
+  //Just an Everythings OK`show.
   delay(1000);
-  colorWipe(PendingColor, 35);
-  delay(1000);
+
+  //Calibrate for 1000 frames, get the highest cap in that range and use it to set TouchThreshold and MaxTouch
+  int calibrationDelation = 1000;
+  for(int i = 0; i < calibrationDelation; ++i)
+  {
+    fillOverTime(PendingColor, i, calibrationDelation);
+    if(CircuitPlayground.readCap(0) > BaselineTouchThreshold)
+    {
+      BaselineTouchThreshold = CircuitPlayground.readCap(0);
+      TouchThreshold = BaselineTouchThreshold;
+      MaxTouch = CircuitPlayground.readCap(0);
+    }
+    delay(1);
+  }
+
+  TouchThreshold *= 2.0; //Lets start 2X as high as the max signal we got, we're assuming we didn't touch during calibration.
   CircuitPlayground.clearPixels();
 
-
-  
   //Now that everythigns connected, rainbows!
-  theaterChaseRainbow(20, 2000);
+  theaterChaseRainbow(20, 1000);
   CircuitPlayground.clearPixels();
-
-
-  // for (int i = 0; i < 10000; ++i)
-  // {
-  //  fillOverTime(CircuitPlayground.strip, PendingColor, i, 10000);
-  //   delay(1);
-  // }
-  // CircuitPlayground.clearPixels();
 
   Serial.println(MenuTreeToString(MainMenu));
-
-
-
 }
 
 char buffer[200];  // make sure this is large enough for the largest string it must hold
@@ -384,10 +396,6 @@ void loop() {
 //  //If a hold is occuring, continue moving at your current vector, i.e. a tangent to the circle. (Gotta see it in action)
 //
 
-//Changeable Mouse Settings
-int CircleSpeed = 125; 
-float CircleSize = 5; // Circle Radius
-int MouseLinearSpeed = 100; //The Delay between each frame of the mouse moving in a line. Longer is slower.
 
 
 void MouseFunctions()
@@ -418,7 +426,7 @@ void MouseFunctions()
 
       float minSpeed = 0.0;//Minimum mouse speed
       float maxSpeed = 7.5;//Maximum mouse speed
-      float rampUpSpeed = 0.05; //Scalar effecting how quickly we ramp from min to max.
+      //float RampUpSpeed = 0.25; //Scalar effecting how quickly we ramp from min to max.
 
       int xMove = (round(xMax));
       int yMove = (round(yMax));
@@ -506,7 +514,7 @@ void MouseFunctions()
           while(TouchCondition()) 
           {
             
-            float speed = constrain(heldTime * rampUpSpeed,  minSpeed, maxSpeed);
+            float speed = constrain(heldTime * RampUpSpeed,  minSpeed, maxSpeed);
             Mouse.move(speed * float(xMove), speed *  float(yMove)); //Using heldTime as a scaler results in a linear acceleration.
             delay(MouseLinearSpeed);
             ++heldTime;
@@ -558,14 +566,23 @@ void MouseFunctions()
 int AverageCap = 0;
 bool TouchCondition()
 {
-  if(DebugSerialCapacativeTouch)
-    Serial.println(CircuitPlayground.readCap(0));
 
-  AverageCap += CircuitPlayground.readCap(0);
-  AverageCap /= 2;
-  //Serial.print(" CT0("); Serial.print(CircuitPlayground.readCap(0));Serial.print(')');
-  return AverageCap > 1200;
+  //Fast Fall Smoothing
+  AverageCap = AverageCap > CircuitPlayground.readCap(0) ? //Teranary operator. If this is true
+        (AverageCap * 3 + CircuitPlayground.readCap(0))/4 //Reutrn this
+        :(AverageCap * 9 + CircuitPlayground.readCap(0))/10; //Otherwise return this
+  
+  if(DebugSerialCapacativeTouch)
+  {
+    Serial.print("TouchThreshold:"); Serial.print(TouchThreshold); Serial.print('\t');
+    Serial.print("Raw:"); Serial.print(CircuitPlayground.readCap(0)); Serial.print('\t');
+    Serial.print("Smoothed:"); Serial.println(AverageCap);
+
+  }
+
+  return AverageCap > TouchThreshold;
 }
+
 
 Commands AwaitInput(int FramesToWait)
 {

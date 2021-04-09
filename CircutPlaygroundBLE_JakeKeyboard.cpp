@@ -179,7 +179,19 @@ void setup()
   //Just an Everythings OK`show.
   delay(1000);
 
-  //Calibrate for 1000 frames, get the highest cap in that range and use it to set TouchThreshold and MaxTouch
+  calibrate();
+
+  Serial.println(MenuTreeToString(MainMenu));
+}
+
+void calibrate()
+{
+  delay(10);
+  BaselineTouchThreshold = 0;
+  TouchThreshold = 0;
+  MaxTouch = 0;
+  
+    //Calibrate for 1000 frames, get the highest cap in that range and use it to set TouchThreshold and MaxTouch
   int calibrationDelation = 1000;
   for(int i = 0; i < calibrationDelation; ++i)
   {
@@ -199,8 +211,6 @@ void setup()
   //Now that everythigns connected, rainbows!
   theaterChaseRainbow(20, 1000);
   CircuitPlayground.clearPixels();
-
-  Serial.println(MenuTreeToString(MainMenu));
 }
 
 char buffer[200];  // make sure this is large enough for the largest string it must hold
@@ -562,8 +572,10 @@ void MouseFunctions()
 
 //////////////////////////////INPUT FUNCTIONS/////////////////////////////////
 int AverageCap = 0;
+int AverageCap2 = 0;
 bool TouchCondition()
 {
+
   int cap = CircuitPlayground.readCap(0);
 
   //Fast Fall Smoothing
@@ -576,15 +588,30 @@ bool TouchCondition()
     MaxTouch = AverageCap;
     TouchThreshold = (MaxTouch + 2 * BaselineTouchThreshold)/3;
   }
+
+  int cap2 = CircuitPlayground.readCap(1);
+  //Fast Fall Smoothing
+  AverageCap2 = AverageCap2 > cap2 ? //Teranary operator. If this is true
+        (AverageCap2 * 9 + cap2)/10 //Reutrn this
+        :(AverageCap2 * 9 + cap2)/10; //Otherwise return this
+
+  if(AverageCap2 > 1500)
+  {
+    calibrate();
+    AverageCap2 = 0;
+  }
+
   
   if(DebugSerialCapacativeTouch)
   {
     Serial.println("BaselineTouchThreshold"); Serial.print(BaselineTouchThreshold); Serial.print('\t');
     Serial.print("TouchThreshold:"); Serial.print(TouchThreshold); Serial.print('\t');
     Serial.print("Raw:"); Serial.print(cap); Serial.print('\t');
+    Serial.print("Raw2:"); Serial.print(AverageCap2); Serial.print('\t');
     Serial.print("Smoothed:"); Serial.println(AverageCap);
 
   }
+
 
   return AverageCap > TouchThreshold;
 }

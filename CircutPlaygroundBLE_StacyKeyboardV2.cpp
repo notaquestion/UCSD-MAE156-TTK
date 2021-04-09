@@ -179,7 +179,19 @@ void setup()
   //Just an Everythings OK`show.
   delay(1000);
 
-  //Calibrate for 1000 frames, get the highest cap in that range and use it to set TouchThreshold and MaxTouch
+  calibrate();
+
+  Serial.println(MenuTreeToString(MainMenu));
+}
+
+void calibrate()
+{
+  delay(10);
+  BaselineTouchThreshold = 0;
+  TouchThreshold = 0;
+  MaxTouch = 0;
+  
+    //Calibrate for 1000 frames, get the highest cap in that range and use it to set TouchThreshold and MaxTouch
   int calibrationDelation = 1000;
   for(int i = 0; i < calibrationDelation; ++i)
   {
@@ -199,8 +211,6 @@ void setup()
   //Now that everythigns connected, rainbows!
   theaterChaseRainbow(20, 1000);
   CircuitPlayground.clearPixels();
-
-  Serial.println(MenuTreeToString(MainMenu));
 }
 
 char buffer[200];  // make sure this is large enough for the largest string it must hold
@@ -237,7 +247,7 @@ void loop() {
             // delay(1000);
             // ClearText("Going to Mouse Menu");
 
-            DebugSerialCapacativeTouch = false;
+            //DebugSerialCapacativeTouch = false;
             CurrentMenu = MouseMenu;
         }
 
@@ -560,25 +570,48 @@ void MouseFunctions()
 }
 
 
-
-
 //////////////////////////////INPUT FUNCTIONS/////////////////////////////////
 int AverageCap = 0;
+int AverageCap2 = 0;
 bool TouchCondition()
 {
 
+  int cap = CircuitPlayground.readCap(0);
+
   //Fast Fall Smoothing
-  AverageCap = AverageCap > CircuitPlayground.readCap(0) ? //Teranary operator. If this is true
-        (AverageCap * 3 + CircuitPlayground.readCap(0))/4 //Reutrn this
-        :(AverageCap * 9 + CircuitPlayground.readCap(0))/10; //Otherwise return this
+  AverageCap = AverageCap > cap ? //Teranary operator. If this is true
+        cap //Reutrn this
+        :(AverageCap * 9 + cap)/10; //Otherwise return this
+
+  if(AverageCap > MaxTouch)
+  {
+    MaxTouch = AverageCap;
+    TouchThreshold = (MaxTouch + 2 * BaselineTouchThreshold)/3;
+  }
+
+  int cap2 = CircuitPlayground.readCap(1);
+  //Fast Fall Smoothing
+  AverageCap2 = AverageCap2 > cap2 ? //Teranary operator. If this is true
+        (AverageCap2 * 9 + cap2)/10 //Reutrn this
+        :(AverageCap2 * 9 + cap2)/10; //Otherwise return this
+
+  if(AverageCap2 > 1500)
+  {
+    calibrate();
+    AverageCap2 = 0;
+  }
+
   
   if(DebugSerialCapacativeTouch)
   {
+    Serial.println("BaselineTouchThreshold"); Serial.print(BaselineTouchThreshold); Serial.print('\t');
     Serial.print("TouchThreshold:"); Serial.print(TouchThreshold); Serial.print('\t');
-    Serial.print("Raw:"); Serial.print(CircuitPlayground.readCap(0)); Serial.print('\t');
+    Serial.print("Raw:"); Serial.print(cap); Serial.print('\t');
+    Serial.print("Raw2:"); Serial.print(AverageCap2); Serial.print('\t');
     Serial.print("Smoothed:"); Serial.println(AverageCap);
 
   }
+
 
   return AverageCap > TouchThreshold;
 }
@@ -586,7 +619,8 @@ bool TouchCondition()
 
 Commands AwaitInput(int FramesToWait)
 {
-  Serial.println("\nAwaiting Input - ");
+  if(!DebugSerialCapacativeTouch)
+    Serial.println("\nAwaiting Input - ");
   bool hasBeenFalse = false; //Has this ever been false? TO prevent button from being held accidentily as part of last press.
 
   int i = 0;
@@ -611,7 +645,10 @@ Commands AwaitInput(int FramesToWait)
     else if(TouchCondition() && hasBeenFalse) 
     {
       CircuitPlayground.playTone(50, 100, false);
-      Serial.print("\nTouch Started...");
+      
+      if(!DebugSerialCapacativeTouch)
+        Serial.print("\nTouch Started...");
+      
       int t = 0;
 
 
@@ -621,7 +658,11 @@ Commands AwaitInput(int FramesToWait)
         t += 100;
         delay(100);
       }
-      Serial.print("\nFinished Touch. Duration "); Serial.print(t); Serial.print(" frames. Result: ");
+      
+      if(!DebugSerialCapacativeTouch)
+      {
+        Serial.print("\nFinished Touch. Duration "); Serial.print(t); Serial.print(" frames. Result: ");
+      }
 
       CircuitPlayground.clearPixels();
 
@@ -630,16 +671,22 @@ Commands AwaitInput(int FramesToWait)
         CircuitPlayground.playTone(125, 100, false);
         // DisplayText(" --Back-- ");
         colorWipe(GoBackColor, 25); 
-        Serial.print("Go Back. Awaiting Release:");
+
+        if(!DebugSerialCapacativeTouch)
+          Serial.print("Go Back. Awaiting Release:");
+
         delay(500);
         // ClearText(" --Back-- ");
 
         while(TouchCondition())
         {
           delay(20);
-          Serial.print('.');
+            if(!DebugSerialCapacativeTouch)
+              Serial.print('.');
         }
-        Serial.println("Released");
+        if(!DebugSerialCapacativeTouch)
+          Serial.println("Released");
+        
         CircuitPlayground.playTone(150, 100, false);
         
         CircuitPlayground.clearPixels();
@@ -653,7 +700,10 @@ Commands AwaitInput(int FramesToWait)
         // DisplayText(" --Selected-- ");
         // DisplayText(String(t));
         colorWipe(ConfirmColor, 25); 
-        Serial.println("Select");
+  
+        if(!DebugSerialCapacativeTouch)
+          Serial.println("Select");
+  
         delay(500);
         // ClearText(String(t));
         // ClearText(" --Selected-- ");
@@ -665,7 +715,9 @@ Commands AwaitInput(int FramesToWait)
     }
 
   }
-  Serial.println("\n - End Await Input");
+  if(!DebugSerialCapacativeTouch)
+    Serial.println("\n - End Await Input");
+  
   CircuitPlayground.clearPixels();
   return None;
 }

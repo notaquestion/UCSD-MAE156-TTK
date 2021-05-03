@@ -93,6 +93,10 @@ class Button:
         self.myColor = color
         self.touchCondition = condition
 
+    def SetPressedAndHoldTimes(self, pressTime, holdTime):
+        self.timeTillPressed = pressTime
+        self.timeTillHeld = holdTime
+
     def Pressed(self): #returns "are we pressed"
         return self.holdTime > self.timeTillPressed and self.holdTime < self.timeTillHeld
 
@@ -110,22 +114,17 @@ class Button:
                 Button.LAST_CONTACTED = self
                 cp.stop_tone()
                 cp.start_tone(100 + (50 * (MODE * 9 +self.order)))
-                print("start", self.order)
             elif (self.state == ButtonStates.CONTACT and self.Pressed()):
                 self.state = ButtonStates.JUST_PRESSED
                 cp.stop_tone()
-                print("stop", self.order)
                 time.sleep(0.01)
             elif self.state == ButtonStates.JUST_PRESSED:
                 self.state = ButtonStates.PRESSED
                 cp.start_tone(100 + (50 * (MODE * 9 +self.order)))
-                print("start", self.order)
             elif self.state == ButtonStates.PRESSED and self.Held():
                 cp.stop_tone()
-                print("stop", self.order)
                 time.sleep(0.01)
                 cp.start_tone(100 + (50 * (MODE * 9 +self.order)))
-                print("start", self.order)
                 self.state = ButtonStates.DOWN
         else :
             self.holdTime = 0.0
@@ -133,18 +132,15 @@ class Button:
                 self.state = ButtonStates.JUST_RELEASED_HOLD
                 if not slide:
                     cp.stop_tone()
-                    print("stop", self.order)
             elif self.state== ButtonStates.JUST_PRESSED or self.state == ButtonStates.PRESSED:
                 self.state = ButtonStates.JUST_RELEASED_PRESS
                 if not slide:
                     cp.stop_tone()
-                    print("stop", self.order)
             elif self.state == ButtonStates.JUST_RELEASED_HOLD or self.state == ButtonStates.JUST_RELEASED_PRESS:
                 self.state = ButtonStates.RELEASED
             elif self.state == ButtonStates.CONTACT:
                 if not slide:
                     cp.stop_tone()
-                    print("stop", self.order)
                 self.state = ButtonStates.UP
             else:
                 self.state = ButtonStates.UP
@@ -171,17 +167,25 @@ A4 = Button("A4", 7, [1], 0x101010, lambda: cp.touch_A2)
 B4 = Button("B4", 8, [1, 0], B4_Color, lambda: cp.touch_A2 and cp.touch_A1)
 A5 = Button("A5", 9, [0], 0x101010, lambda: cp.touch_A1)
 
+#Set custom Hold Times for Left/Right Up/Down since they're non-destructive
+A2.SetPressedAndHoldTimes(0.05, 0.1)
+B2.SetPressedAndHoldTimes(0.05, 0.1)
+#
+B3.SetPressedAndHoldTimes(0.05, 0.1)
+A4.SetPressedAndHoldTimes(0.05, 0.1)
+
+
 #Put buttons in a list to iterate through. Put dual condition ones first because first true blocks the rest.
 Buttons = [B1, B2, B3, B4, A1, A2, A3, A4, A5] #A list we can iterate through. Must Evaluate Double buttons first as they'll block single buttons.
 #END TOUCH SENSITIVE BUTTONS
 
 MODE = 0 #What if we want to change what all the buttons do?
 
-SHORT_MOUSE_MOVE = 5 #How many units should the mouse move on a tap.
+SHORT_MOUSE_MOVE = 10 #How many units should the mouse move on a tap.
 
 MOUSE_ACCEL_SPEED = 0.3
 MOUSE_ACCEL_TIMER = 0
-MOUSE_MAX_SPEED = 10.0
+MOUSE_MAX_SPEED = 5.0
 LEFT_MOUSE_HELD = False
 RIGHT_MOUSE_HELD = False
 

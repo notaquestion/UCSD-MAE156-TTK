@@ -41,10 +41,10 @@ mouse = Mouse(hid.devices)
 ColorToLight = 0xFFFFFF
 
 SingleLight_Color = 0xFFFFFF
-B1_Color = 0x990099
-B2_Color = 0x993000
-B3_Color = 0x053099
-B4_Color = 0x999900
+B1_Color = 0x100010
+B2_Color = 0x100300
+B3_Color = 0x010310
+B4_Color = 0x101000
 TooMany_Color = 0xFF0007
 
 #TODO: Use these to indicate when Left or Right Click is held down.
@@ -79,6 +79,7 @@ class Button:
     myPixels = []
     myColor = 0xFFFFFF
 
+    #Note, there are some time.sleeps for debouncing that add an additional 0.11s to these times.
     holdTime = 0.0 #How long has this butotn been held for?
     timeTillPressed = 0.5 #over this threshold, we're pressing the button.
     timeTillHeld = 1.0 #over this threshold we're holding this button.
@@ -110,10 +111,12 @@ class Button:
             self.holdTime += 0.01
             Button.CURRENT_ACTIVATED = self
             if(self.state == ButtonStates.UP and not self.Pressed()): #contact made but not long enough to count as a press
-                self.state = ButtonStates.CONTACT
-                Button.LAST_CONTACTED = self
-                cp.stop_tone()
-                cp.start_tone(100 + (50 * (MODE * 9 +self.order)))
+                time.sleep(0.1) # Wait a frame and see if we're still being touched
+                if(self.touchCondition()): #A little bit of debounce on sound (but not light) in case we get some noise 
+                    self.state = ButtonStates.CONTACT
+                    Button.LAST_CONTACTED = self
+                    cp.stop_tone()
+                    cp.start_tone(100 + (50 * (MODE * 9 +self.order)))
             elif (self.state == ButtonStates.CONTACT and self.Pressed()):
                 self.state = ButtonStates.JUST_PRESSED
                 cp.stop_tone()
@@ -145,32 +148,22 @@ class Button:
             else:
                 self.state = ButtonStates.UP
 
-#Initalize all the buttons
-# A1 = Button("A1", 1, lambda: cp.touch_A1)
-# B1 = Button("B1", 2, lambda: cp.touch_A1 and cp.touch_A2) #this "button" is pressed if both pins are pressed
-# A2 = Button("A2", 3, lambda: cp.touch_A2)
-# B2 = Button("B2", 4, lambda: cp.touch_A2 and cp.touch_A3)
-# A3 = Button("A3", 5, lambda: cp.touch_A3)
-# B3 = Button("B3", 6, lambda: cp.touch_A3 and cp.touch_A4)
-# A4 = Button("A4", 7, lambda: cp.touch_A4)
-# B4 = Button("B4", 8, lambda: cp.touch_A4 and cp.touch_A5)
-# A5 = Button("A5", 9, lambda: cp.touch_A5)
 
-#I made my prototype backwards so I'm flipping it here, but the one above is more proper.
-A1 = Button("A1", 1, [4], 0x101010, lambda: cp.touch_A5)
-B1 = Button("B1", 2, [4, 3], B1_Color, lambda: cp.touch_A5 and cp.touch_A4) #this "button" is pressed if both pins are pressed
-A2 = Button("A2", 3, [3], 0x101010, lambda: cp.touch_A4)
-B2 = Button("B2", 4, [3, 2], B2_Color, lambda: cp.touch_A4 and cp.touch_A3)
-A3 = Button("A3", 5, [2], 0x101010, lambda: cp.touch_A3)
-B3 = Button("B3", 6, [2, 1], B3_Color, lambda: cp.touch_A3 and cp.touch_A2)
-A4 = Button("A4", 7, [1], 0x101010, lambda: cp.touch_A2)
-B4 = Button("B4", 8, [1, 0], B4_Color, lambda: cp.touch_A2 and cp.touch_A1)
-A5 = Button("A5", 9, [0], 0x101010, lambda: cp.touch_A1)
+A1 = Button("A1", 1, [9], 0x101010,  lambda: cp.touch_A1)
+B1 = Button("B1", 2, [9, 8], B1_Color,  lambda: cp.touch_A1 and cp.touch_A2) #this "button" is pressed if both pins are pressed
+A2 = Button("A2", 3, [8], 0x101010,  lambda: cp.touch_A2)
+B2 = Button("B2", 4, [8, 7], B2_Color,  lambda: cp.touch_A2 and cp.touch_A3)
+A3 = Button("A3", 5, [7], 0x101010,  lambda: cp.touch_A3)
+B3 = Button("B3", 6, [7, 6], B3_Color,  lambda: cp.touch_A3 and cp.touch_A4)
+A4 = Button("A4", 7, [6], 0x101010,  lambda: cp.touch_A4)
+B4 = Button("B4", 8, [6, 5], B4_Color,  lambda: cp.touch_A4 and cp.touch_A5)
+A5 = Button("A5", 9, [5], 0x101010,  lambda: cp.touch_A5)
 
-#Set custom Hold Times for Left/Right Up/Down since they're non-destructive
+#Set custom (shorter) Hold Times for Left/Right Up/Down since they're non-destructive
+#Note, there are some time.sleeps for debouncing that add an additional 0.11s to these times.
 A2.SetPressedAndHoldTimes(0.05, 0.1)
 B2.SetPressedAndHoldTimes(0.05, 0.1)
-#
+
 B3.SetPressedAndHoldTimes(0.05, 0.1)
 A4.SetPressedAndHoldTimes(0.05, 0.1)
 
@@ -201,11 +194,11 @@ def UpdateLightsToTouches():
     PixelsToLight = [(0, 0, 0)] * 10
 
     if MODE == 0:
-        PixelsToLight = [(0, 0, 0)] * 5 + [(5, 2, 2)] * 5
+        PixelsToLight = [(5, 2, 2)] * 5 + [(0, 0, 0)] * 5
     elif MODE == 1:
-         PixelsToLight = [(0, 0, 0)] * 5 + [(2, 5, 2)] * 5
+        PixelsToLight = [(2, 5, 2)] * 5 + [(0, 0, 0)] * 5
     elif MODE == 2:
-        PixelsToLight = [(0, 0, 0)] * 5 + [(2, 2, 5)] * 5
+        PixelsToLight = [(2, 2, 5)] * 5 + [(0, 0, 0)] * 5
 
     if Button.CURRENT_ACTIVATED:
         for p in Button.CURRENT_ACTIVATED.myPixels:
@@ -229,15 +222,15 @@ def UpdateLightsToTouches():
 #main loop
 while True:
     while not ble.connected:
-        cp.pixels.fill((50, 0, 0))
+        cp.pixels.fill((1, 0, 0))
         time.sleep(0.5)
-        cp.pixels.fill((0, 0, 50))
+        cp.pixels.fill((0, 0, 1))
         time.sleep(0.5)
         pass
     print("Start typing:")
 
     while ble.connected:
-        cp.pixels.brightness = 1.0 #low for deving (kept blinding myself.)
+        cp.pixels.brightness = 0.7 #low for deving (kept blinding myself.)
 
         #Update all button states and hold times (single pin and double pin buttons)
         #TODO: This should be in the button class. Update Self.

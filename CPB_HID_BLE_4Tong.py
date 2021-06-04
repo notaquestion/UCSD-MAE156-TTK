@@ -82,7 +82,7 @@ class Button:
     #Note, there are some time.sleeps for debouncing that add an additional 0.11s to these times.
     holdTime = 0.0 #How long has this butotn been held for?
     timeTillPressed = 0.5 #over this threshold, we're pressing the button.
-    timeTillHeld = 1.0 #over this threshold we're holding this button.
+    timeTillHeld = 2.0 #over this threshold we're holding this button.
 
 
 
@@ -161,11 +161,11 @@ A4 = Button("A4", 7, [6], 0x101010,  lambda: cp.touch_A4)
 
 #Set custom (shorter) Hold Times for Left/Right Up/Down since they're non-destructive
 #Note, there are some time.sleeps for debouncing that add an additional 0.11s to these times.
-A2.SetPressedAndHoldTimes(0.05, 0.1)
-A3.SetPressedAndHoldTimes(0.05, 0.1)
+A2.SetPressedAndHoldTimes(0.3, 0.5)
+A3.SetPressedAndHoldTimes(0.3, 0.5)
 
-B1.SetPressedAndHoldTimes(0.05, 0.1)
-B3.SetPressedAndHoldTimes(0.05, 0.1)
+B1.SetPressedAndHoldTimes(0.3, 0.5)
+B3.SetPressedAndHoldTimes(0.3, 0.5)
 
 
 #Put buttons in a list to iterate through. Put dual condition ones first because first true blocks the rest.
@@ -177,12 +177,12 @@ MODE = 0 #What if we want to change what all the buttons do?
 
 SHORT_MOUSE_MOVE = 10 #How many units should the mouse move on a tap.
 
-MOUSE_ACCEL_SPEED = 0.3
+MOUSE_ACCEL_SPEED = 0.01
 MOUSE_ACCEL_TIMER = 0
 MOUSE_MAX_SPEED = 5.0
 LEFT_MOUSE_HELD = False
 RIGHT_MOUSE_HELD = False
-
+ 
 SCROLL_UP = False #Bool to flip up/down scrolling
 
 
@@ -221,6 +221,21 @@ def UpdateLightsToTouches():
     #print(cp.pixels)
 
 
+# Timer = 0
+# ChangeDirTimer = 1000
+# DirIndex = 0
+# MouseDirections = [(2, 0), (1, -1), (0, -2), (-1, -1), (-2, 0), (-1, 1), (2, 0), (1, 1)]
+# XComp = 0
+# YComp = 0
+
+
+# def MouseCircleFunction():
+# 	Timer += 1
+
+
+
+
+
 #main loop
 while True:
     while not ble.connected:
@@ -249,6 +264,9 @@ while True:
         #print("")
         UpdateLightsToTouches()
 
+
+        # MouseCircleFunction()
+
         if cp.switch: # Do real functionality when switch is on
             if True: #MODE == 0:
 
@@ -258,7 +276,7 @@ while True:
                     mouse.move(y=SHORT_MOUSE_MOVE)
                 elif Buttons[0].state == ButtonStates.DOWN:
                     MOUSE_ACCEL_TIMER += MOUSE_ACCEL_SPEED
-                    speed = clamp((1 + MOUSE_ACCEL_TIMER), 1, MOUSE_MAX_SPEED)
+                    speed = clamp((1 + MOUSE_ACCEL_TIMER * 0.01), 1, MOUSE_MAX_SPEED)
                     mouse.move(y = int(speed))
                 elif Buttons[0].state == ButtonStates.JUST_RELEASED_HOLD:
                     MOUSE_ACCEL_TIMER = 0

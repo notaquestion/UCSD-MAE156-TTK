@@ -16,7 +16,7 @@ int InputDelay = 5; //Delay before a new Input can be started after showing a ne
 //Changeable Mouse Settings? - Stole them from Jakes, can we adapt them?
 int CircleSpeed = 125; //How fast the mouse circles when input is not being held.
 float CircleSize = 5; // Circle Radius
-int MouseLinearSpeed = 100; //The Delay between each frame of the mouse moving in a line. Longer is slower.
+int MouseLinearSpeed = 50; //The Delay between each frame of the mouse moving in a line. Longer is slower.
 float RampUpSpeed = 0.05; //Scalar effecting how quickly we ramp from min to max.
 
 bool DebugSerialCapacativeTouch = true;

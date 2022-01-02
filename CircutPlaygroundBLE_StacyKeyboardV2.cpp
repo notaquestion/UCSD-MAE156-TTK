@@ -526,7 +526,14 @@ void MouseFunctions()
             
             float speed = constrain(heldTime * RampUpSpeed,  minSpeed, maxSpeed);
             Mouse.move(speed * float(xMove), speed *  float(yMove)); //Using heldTime as a scaler results in a linear acceleration.
-            delay(MouseLinearSpeed);
+            // delay(MouseLinearSpeed);
+            int pause = 0;
+            while(pause < MouseLinearSpeed) //If we don't check Touch Condition every single frame, we'll get signifigantly differt values. (Lower, less noisy);
+            {
+              TouchCondition();
+              ++pause;
+              delay(1);
+            }
             ++heldTime;
             if(heldTime < HoldToGoBackLength)
             {
@@ -573,20 +580,41 @@ void MouseFunctions()
 //////////////////////////////INPUT FUNCTIONS/////////////////////////////////
 int AverageCap = 0;
 int AverageCap2 = 0;
+
+int FramesBellow = 0;
+
+int StartRatio = 2000;
+
+
 bool TouchCondition()
 {
 
   int cap = CircuitPlayground.readCap(0);
 
-  //Fast Fall Smoothing
-  AverageCap = AverageCap > cap ? //Teranary operator. If this is true
-        cap //Reutrn this
-        :(AverageCap * 9 + cap)/10; //Otherwise return this
+  if(cap > 1000)
+    cap = 1000;
+
+  if(cap < AverageCap)
+  {
+    FramesBellow++;
+    AverageCap = (AverageCap * StartRatio + cap * FramesBellow)/(StartRatio + FramesBellow);
+  }
+  else
+  {
+    FramesBellow = 0;
+    AverageCap = (AverageCap * 9 + cap)/10;
+  }
+
+  // Fast Fall Smoothing
+  // AverageCap = AverageCap > cap ? //Teranary operator. If this is true
+  //       (AverageCap * 7 + cap)/10 // Reading was bellow average
+  //       :(AverageCap * 9 + cap)/10; //Reading was above average
 
   if(AverageCap > MaxTouch)
   {
     MaxTouch = AverageCap;
-    TouchThreshold = (MaxTouch + 2 * BaselineTouchThreshold)/3;
+    TouchThreshold = (MaxTouch + 1 * BaselineTouchThreshold)/2;
+    //TouchThreshold = MaxTouch / 4;
   }
 
   int cap2 = CircuitPlayground.readCap(1);
@@ -604,11 +632,14 @@ bool TouchCondition()
   
   if(DebugSerialCapacativeTouch)
   {
-    Serial.println("BaselineTouchThreshold"); Serial.print(BaselineTouchThreshold); Serial.print('\t');
+    Serial.print("BaselineTouchThreshold"); Serial.print(BaselineTouchThreshold); Serial.print('\t');
     Serial.print("TouchThreshold:"); Serial.print(TouchThreshold); Serial.print('\t');
     Serial.print("Raw:"); Serial.print(cap); Serial.print('\t');
     Serial.print("Raw2:"); Serial.print(AverageCap2); Serial.print('\t');
-    Serial.print("Smoothed:"); Serial.println(AverageCap);
+    Serial.print("Smoothed:"); Serial.print(AverageCap);
+    //Serial.print("FramesBellowX100:"); Serial.print(FramesBellow * 100);
+    Serial.print('\n');
+
 
   }
 

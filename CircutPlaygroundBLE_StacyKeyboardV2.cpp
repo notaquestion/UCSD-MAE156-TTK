@@ -535,32 +535,32 @@ void MouseFunctions()
               delay(1);
             }
             ++heldTime;
-            if(heldTime < HoldToGoBackLength)
-            {
-              fillOverTime(PendingColor, heldTime, HoldToGoBackLength); //Let us know how long until we trigger a go back to main menu.
-            }
-            else
-            {
-              if(!signaledGoBack)
-              {
-                signaledGoBack = true;
-                colorWipe(GoBackColor, 25);
-                CircuitPlayground.playTone(50, 300, false);
-              }
-            }
+            // if(heldTime < HoldToGoBackLength)
+            // {
+            //   fillOverTime(PendingColor, heldTime, HoldToGoBackLength); //Let us know how long until we trigger a go back to main menu.
+            // }
+            // else
+            // {
+            //   if(!signaledGoBack)
+            //   {
+            //     signaledGoBack = true;
+            //     colorWipe(GoBackColor, 25);
+            //     CircuitPlayground.playTone(50, 300, false);
+            //   }
+            // }
           }
 
           //If you hold for over a certain amount of time (until all the white LEDs are lit up), we assume that's because you want to go back to typing stuff/
-          if(heldTime > HoldToGoBackLength)
-          {
-            CurrentMenu = MainMenu;
-            CircuitPlayground.playTone(50, 300, false);
-            colorWipe(GoBackColor, 50);
-          }
-          else
-          {
+          // if(heldTime > HoldToGoBackLength)
+          // {
+          //   CurrentMenu = MainMenu;
+          //   CircuitPlayground.playTone(50, 300, false);
+          //   colorWipe(GoBackColor, 50);
+          // }
+          // else
+          // {
             CircuitPlayground.playTone(150, 100, false);
-          }
+          // }
         }
         else
         {

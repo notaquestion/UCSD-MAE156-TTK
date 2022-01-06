@@ -190,22 +190,36 @@ void calibrate()
   BaselineTouchThreshold = 0;
   TouchThreshold = 0;
   MaxTouch = 0;
+  int MinTouch = 10000000; //We use MaxTouch for other things, but only need min to calibrate starting value
   
     //Calibrate for 1000 frames, get the highest cap in that range and use it to set TouchThreshold and MaxTouch
   int calibrationDelation = 1000;
   for(int i = 0; i < calibrationDelation; ++i)
   {
     fillOverTime(PendingColor, i, calibrationDelation);
-    if(CircuitPlayground.readCap(0) > BaselineTouchThreshold)
-    {
-      BaselineTouchThreshold = CircuitPlayground.readCap(0);
-      TouchThreshold = BaselineTouchThreshold;
+    if(CircuitPlayground.readCap(0) > MaxTouch)
       MaxTouch = CircuitPlayground.readCap(0);
-    }
+
+    if(CircuitPlayground.readCap(0) < MinTouch)
+      MinTouch = CircuitPlayground.readCap(0);
+
     delay(1);
+    Serial.print("BaselineTouchThreshold:"); Serial.println(CircuitPlayground.readCap(0));
   }
 
-  TouchThreshold *= 2.0; //Lets start 2X as high as the max signal we got, we're assuming we didn't touch during calibration.
+  //Fixes: Problem with Min and Max being over 1000 during calibration because user is holding input while caplibrating.
+  {
+    if(MaxTouch > 1000)
+      MaxTouch = 1000;
+
+    if(MinTouch > 800) 
+      MinTouch = 800;
+  }
+
+
+  BaselineTouchThreshold = MinTouch + 0.75 * (MaxTouch - MinTouch);
+  TouchThreshold = BaselineTouchThreshold + 1; //Just add a bit so we can see it on the graph.
+
   CircuitPlayground.clearPixels();
 
   //Now that everythigns connected, rainbows!
@@ -632,7 +646,7 @@ bool TouchCondition()
   
   if(DebugSerialCapacativeTouch)
   {
-    Serial.print("BaselineTouchThreshold"); Serial.print(BaselineTouchThreshold); Serial.print('\t');
+    Serial.print("BaselineTouchThreshold:"); Serial.print(BaselineTouchThreshold); Serial.print('\t');
     Serial.print("TouchThreshold:"); Serial.print(TouchThreshold); Serial.print('\t');
     Serial.print("Raw:"); Serial.print(cap); Serial.print('\t');
     Serial.print("Raw2:"); Serial.print(AverageCap2); Serial.print('\t');
